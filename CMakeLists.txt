@@ -13,6 +13,13 @@ add_executable(alarm
 	${CMAKE_CURRENT_LIST_DIR}/src/main.c
 )
 
-target_link_libraries(alarm pico_stdlib)
+target_link_libraries(alarm
+	pico_stdlib
+	hardware_dma
+	hardware_pio
+	hardware_timer
+	hardware_clocks
+	hardware_pwm
+)
 
 pico_add_extra_outputs(alarm)
