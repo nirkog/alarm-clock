@@ -11,6 +11,7 @@ pico_sdk_init()
 # rest of your project
 add_executable(alarm
 	${CMAKE_CURRENT_LIST_DIR}/src/main.c
+	${CMAKE_CURRENT_LIST_DIR}/src/seven_segment/seven_segment.c
 )
 
 target_link_libraries(alarm

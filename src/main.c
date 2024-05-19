@@ -5,7 +5,8 @@
 #include "hardware/pwm.h"
 #include "hardware/sync.h"
 
-#include "wav.h"
+#include "audio/wav.h"
+#include "seven_segment/seven_segment.h"
 
 #define AUDIO_PIN (28)
 
@@ -65,11 +66,56 @@ int main() {
 	gpio_init(LED_PIN);
 	gpio_set_dir(LED_PIN, GPIO_OUT);
 
+	seven_segment__driver_t driver;
+
+	seven_segment__init_driver(&driver);
+
+	driver.config.digit_count = 4;
+	driver.config.a_pin = 5;
+	driver.config.b_pin = 6;
+	driver.config.c_pin = 7;
+	driver.config.d_pin = 8;
+	driver.config.e_pin = 9;
+	driver.config.f_pin = 10;
+	driver.config.g_pin = 11;
+	driver.config.dp_pin = 12;
+	driver.config.digit_pins[0] = 13;
+	driver.config.digit_pins[1] = 14;
+	driver.config.digit_pins[2] = 15;
+	driver.config.digit_pins[3] = 16;
+
+	seven_segment__configure_pins(&driver);
+
+	//seven_segment__set_digit_value(&driver, 0, 1, false);
+	//seven_segment__set_digit_value(&driver, 1, 3, false);
+	//seven_segment__set_digit_value(&driver, 2, 3, false);
+	//seven_segment__set_digit_value(&driver, 3, 7, false);
+	
+	uint32_t number = 1337;
+
+	seven_segment__set_number_value(&driver, number);
+
+	printf("Init finished\n");
+	uint32_t count = 0;
+
+	seven_segment__display(&driver);
 	while (true) {
-		gpio_put(LED_PIN, 1);
-		sleep_ms(5000);
-		gpio_put(LED_PIN, 0);
-		sleep_ms(250);
+		//gpio_put(LED_PIN, 1);
+		//sleep_ms(5000);
+		//gpio_put(LED_PIN, 0);
+		//sleep_ms(250);
+		
+		seven_segment__display(&driver);
+
+		sleep_ms(1);
+
+		count += 1;
+		//printf("Update\n");
+		
+		if (count % 1000 == 0) {
+			number++;
+			seven_segment__set_number_value(&driver, number);
+		}
 	}
 	return 0;
 }
