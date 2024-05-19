@@ -6,9 +6,12 @@
 #include "hardware/sync.h"
 
 #include "audio/wav.h"
+#include "time/time.h"
 #include "seven_segment/seven_segment.h"
 
 #define AUDIO_PIN (28)
+
+seven_segment__driver_t g_driver;
 
 int wav_position = 0;
 
@@ -42,7 +45,7 @@ int main() {
     pwm_set_irq_enabled(audio_pin_slice, true);
     // set the handle function above
     irq_set_exclusive_handler(PWM_IRQ_WRAP, pwm_interrupt_handler); 
-    irq_set_enabled(PWM_IRQ_WRAP, true);
+    //irq_set_enabled(PWM_IRQ_WRAP, true);
 
     // Setup PWM for audio output
     pwm_config config = pwm_get_default_config();
@@ -63,59 +66,48 @@ int main() {
 
     pwm_set_gpio_level(AUDIO_PIN, 0);
 
-	gpio_init(LED_PIN);
-	gpio_set_dir(LED_PIN, GPIO_OUT);
+	seven_segment__init_driver(&g_driver);
 
-	seven_segment__driver_t driver;
+	g_driver.config.digit_count = 4;
+	g_driver.config.a_pin = 5;
+	g_driver.config.b_pin = 6;
+	g_driver.config.c_pin = 7;
+	g_driver.config.d_pin = 8;
+	g_driver.config.e_pin = 9;
+	g_driver.config.f_pin = 10;
+	g_driver.config.g_pin = 11;
+	g_driver.config.dp_pin = 12;
+	g_driver.config.digit_pins[0] = 13;
+	g_driver.config.digit_pins[1] = 14;
+	g_driver.config.digit_pins[2] = 15;
+	g_driver.config.digit_pins[3] = 16;
 
-	seven_segment__init_driver(&driver);
+	seven_segment__configure_pins(&g_driver);
 
-	driver.config.digit_count = 4;
-	driver.config.a_pin = 5;
-	driver.config.b_pin = 6;
-	driver.config.c_pin = 7;
-	driver.config.d_pin = 8;
-	driver.config.e_pin = 9;
-	driver.config.f_pin = 10;
-	driver.config.g_pin = 11;
-	driver.config.dp_pin = 12;
-	driver.config.digit_pins[0] = 13;
-	driver.config.digit_pins[1] = 14;
-	driver.config.digit_pins[2] = 15;
-	driver.config.digit_pins[3] = 16;
+	time__configure_time(23, 59, 50);
+	time__configure_alarm_duration(5);
+	time__configure_alarm_time(0, 0, 0);
+	time__start();
 
-	seven_segment__configure_pins(&driver);
+	uint8_t second, minute, hour;
+	uint32_t display_number = 0;
 
-	//seven_segment__set_digit_value(&driver, 0, 1, false);
-	//seven_segment__set_digit_value(&driver, 1, 3, false);
-	//seven_segment__set_digit_value(&driver, 2, 3, false);
-	//seven_segment__set_digit_value(&driver, 3, 7, false);
-	
-	uint32_t number = 1337;
-
-	seven_segment__set_number_value(&driver, number);
-
-	printf("Init finished\n");
-	uint32_t count = 0;
-
-	seven_segment__display(&driver);
 	while (true) {
-		//gpio_put(LED_PIN, 1);
-		//sleep_ms(5000);
-		//gpio_put(LED_PIN, 0);
-		//sleep_ms(250);
+		time__get_current_time(&hour, &minute, &second);
+		display_number = hour * 100 + minute;
+		seven_segment__set_number_value(&g_driver, display_number);
+		seven_segment__set_decimal_point_value(&g_driver, 1, true);
 		
-		seven_segment__display(&driver);
+		seven_segment__display(&g_driver);
+
+		if (time__is_in_alarm()) {
+			irq_set_enabled(PWM_IRQ_WRAP, true);
+		} else {
+			irq_set_enabled(PWM_IRQ_WRAP, false);
+			pwm_set_gpio_level(AUDIO_PIN, 255);
+		}
 
 		sleep_ms(1);
-
-		count += 1;
-		//printf("Update\n");
-		
-		if (count % 1000 == 0) {
-			number++;
-			seven_segment__set_number_value(&driver, number);
-		}
 	}
 	return 0;
 }

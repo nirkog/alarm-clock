@@ -6,6 +6,7 @@
 #include "seven_segment.h"
 
 #define DP_BIT_INDEX (7)
+#define DP_MASK (1 << DP_BIT_INDEX)
 
 bool g_digit_mappings[10][7] = {
 	{0, 0, 0, 0, 0, 0, 1}, // 0
@@ -66,7 +67,7 @@ void seven_segment__display(seven_segment__driver_t* driver) {
 	bool* mapping;
 	uint8_t i;
 
-	mapping = g_digit_mappings[digit_value];
+	mapping = g_digit_mappings[digit_value & ~DP_MASK];
 
 	gpio_put(driver->config.a_pin, mapping[0]);
 	gpio_put(driver->config.b_pin, mapping[1]);
@@ -76,7 +77,7 @@ void seven_segment__display(seven_segment__driver_t* driver) {
 	gpio_put(driver->config.f_pin, mapping[5]);
 	gpio_put(driver->config.g_pin, mapping[6]);
 
-	gpio_put(driver->config.dp_pin, !(digit_value & (1 << DP_BIT_INDEX)));
+	gpio_put(driver->config.dp_pin, !(digit_value & DP_MASK));
 
 	for (i = 0; i < driver->config.digit_count; i++) {
 		if (i == driver->current_digit) {
@@ -100,7 +101,7 @@ void seven_segment__set_digit_value(
 	}
 
 	if (dp) {
-		value |= (1 << DP_BIT_INDEX);
+		value |= DP_MASK;
 	}
 
 	driver->digit_values[index] = value;
@@ -115,5 +116,17 @@ void seven_segment__set_number_value(
 	for (i = driver->config.digit_count; i > 0;  i--) {
 		seven_segment__set_digit_value(driver, i - 1, value % 10, false);
 		value = value / 10;
+	}
+}
+
+void seven_segment__set_decimal_point_value(
+	seven_segment__driver_t* driver,
+	uint8_t index,
+	bool value
+) {
+	if (value) {
+		driver->digit_values[index] |= DP_MASK;
+	} else {
+		driver->digit_values[index] &= ~DP_MASK;
 	}
 }

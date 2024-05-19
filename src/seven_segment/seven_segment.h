@@ -75,3 +75,16 @@ void seven_segment__set_number_value(
 	seven_segment__driver_t* driver,
 	uint32_t value
 );
+
+/*
+ * @brief Set the value of a decimal point in a specific index
+ *
+ * @param driver The driver struct
+ * @param index The decimal point index
+ * @param value New value of the decimal point
+ * */
+void seven_segment__set_decimal_point_value(
+	seven_segment__driver_t* driver,
+	uint8_t index,
+	bool value
+);
