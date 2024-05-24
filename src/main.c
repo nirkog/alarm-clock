@@ -5,13 +5,13 @@
 #include "hardware/pwm.h"
 #include "hardware/sync.h"
 
+#include "common/common.h"
 #include "audio/wav.h"
 #include "time/time.h"
+#include "input/input.h"
 #include "seven_segment/seven_segment.h"
 
 #define AUDIO_PIN (28)
-
-seven_segment__driver_t g_driver;
 
 int wav_position = 0;
 
@@ -66,39 +66,61 @@ int main() {
 
     pwm_set_gpio_level(AUDIO_PIN, 0);
 
-	seven_segment__init_driver(&g_driver);
+	seven_segment__driver_t driver;
 
-	g_driver.config.digit_count = 4;
-	g_driver.config.a_pin = 5;
-	g_driver.config.b_pin = 6;
-	g_driver.config.c_pin = 7;
-	g_driver.config.d_pin = 8;
-	g_driver.config.e_pin = 9;
-	g_driver.config.f_pin = 10;
-	g_driver.config.g_pin = 11;
-	g_driver.config.dp_pin = 12;
-	g_driver.config.digit_pins[0] = 13;
-	g_driver.config.digit_pins[1] = 14;
-	g_driver.config.digit_pins[2] = 15;
-	g_driver.config.digit_pins[3] = 16;
+	seven_segment__init_driver(&driver);
 
-	seven_segment__configure_pins(&g_driver);
+	driver.config.digit_count = 4;
+	driver.config.a_pin = 5;
+	driver.config.b_pin = 6;
+	driver.config.c_pin = 7;
+	driver.config.d_pin = 8;
+	driver.config.e_pin = 9;
+	driver.config.f_pin = 10;
+	driver.config.g_pin = 11;
+	driver.config.dp_pin = 12;
+	driver.config.digit_pins[0] = 13;
+	driver.config.digit_pins[1] = 14;
+	driver.config.digit_pins[2] = 15;
+	driver.config.digit_pins[3] = 16;
 
-	time__configure_time(23, 59, 50);
+	seven_segment__configure_pins(&driver);
+
+	time__configure_time(23, 55, 50);
 	time__configure_alarm_duration(5);
 	time__configure_alarm_time(0, 0, 0);
 	time__start();
+
+	input__state_t state;
+	input__config_t input_config;
+
+	input_config.digit_button_count = 4;
+	input_config.digit_button_pins[0] = 18;
+	input_config.digit_button_pins[1] = 19;
+	input_config.digit_button_pins[2] = 20;
+	input_config.digit_button_pins[3] = 21;
+	input_config.set_time_button_pin = 22;
+	input_config.set_alarm_button_pin = 2;
+
+	input__init(&input_config);
 
 	uint8_t second, minute, hour;
 	uint32_t display_number = 0;
 
 	while (true) {
-		time__get_current_time(&hour, &minute, &second);
-		display_number = hour * 100 + minute;
-		seven_segment__set_number_value(&g_driver, display_number);
-		seven_segment__set_decimal_point_value(&g_driver, 1, true);
+		state = input__get_state();
+
+		if (state == STATE__NORMAL) {
+			time__get_current_time(&hour, &minute, &second);
+			display_number = hour * 100 + minute;
+		} else if ((state == STATE__TIME_SET) || (state == STATE__ALARM_SET)) {
+			display_number = input__get_set_time_value();
+		}
+
+		seven_segment__set_number_value(&driver, display_number);
+		seven_segment__set_decimal_point_value(&driver, 1, true);
 		
-		seven_segment__display(&g_driver);
+		seven_segment__display(&driver);
 
 		if (time__is_in_alarm()) {
 			irq_set_enabled(PWM_IRQ_WRAP, true);

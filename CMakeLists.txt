@@ -14,6 +14,7 @@ add_executable(alarm
 	${CMAKE_CURRENT_LIST_DIR}/src/seven_segment/seven_segment.c
 	${CMAKE_CURRENT_LIST_DIR}/src/audio/audio.c
 	${CMAKE_CURRENT_LIST_DIR}/src/time/time.c
+	${CMAKE_CURRENT_LIST_DIR}/src/input/input.c
 )
 
 target_link_libraries(alarm
@@ -23,6 +24,10 @@ target_link_libraries(alarm
 	hardware_timer
 	hardware_clocks
 	hardware_pwm
+)
+
+include_directories(
+	${CMAKE_CURRENT_LIST_DIR}/src/
 )
 
 pico_add_extra_outputs(alarm)

@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#define MAX_DIGITS (10)
+#include "common/common.h"
 
 typedef struct seven_segment__config_s {
 	uint32_t a_pin;

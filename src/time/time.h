@@ -62,5 +62,7 @@ void time__get_current_time(
 
 /*
  * @brief Check whether the alarm is currently on
+ *
+ * @return Is the alarm on
  * */
 bool time__is_in_alarm(void);
